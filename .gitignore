@@ -1,2 +1,5 @@
 .DS_Store
 .vscode/settings.json
+rootfs.tar
+IOx/foglamp-iot-dnp3-dev-iox-package.tar
+IOx/ioxclient.exe

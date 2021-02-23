@@ -3,7 +3,7 @@ descriptor-schema-version: "2.2"
 info:
   name: JEA-FogLAMP-Docker-IOx
   description: "IOx FogLAMP DNP3 Dev image with utils"
-  version: "1.8.1"
+  version: "1.8.2"
   author-link: "https://raesemann.com"
   author-name: "Rob Raesemann"
 app:

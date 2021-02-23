@@ -33,6 +33,11 @@ RUN make DESTDIR=/tmp_dnp3 install
 ##################
 FROM ubuntu:18.04
 
+# FogLAMP version, ditribution, and platform
+ENV FOGLAMP_VERSION=1.8.2
+ENV FOGLAMP_DISTRIBUTION=ubuntu1804
+ENV FOGLAMP_PLATFORM=x86_64
+
 # Avoid interactive questions when installing Kerberos
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -44,99 +49,89 @@ COPY ./python /usr/local/foglamp/python/
 # Copy foglamp startup script
 COPY foglamp.sh /usr/local/foglamp/foglamp.sh
 
-
-RUN apt update && apt upgrade -y && apt install wget rsyslog python3 python3-pip build-essential libssl-dev python-dev python3-dev git nano sed iputils-ping inetutils-telnet -y && \
-    wget --no-check-certificate https://foglamp.s3.amazonaws.com/1.8.1/ubuntu1804/x86_64/foglamp-1.8.1_x86_64_ubuntu1804.tgz && \
-    tar -xzvf foglamp-1.8.1_x86_64_ubuntu1804.tgz && \
+RUN apt update && apt install wget rsyslog python3 python3-pip build-essential libssl-dev python-dev python3-dev git nano sed iputils-ping inetutils-telnet -y && \
+    wget --no-check-certificate https://foglamp.s3.amazonaws.com/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}_${FOGLAMP_DISTRIBUTION}.tgz && \
+    tar -xzvf foglamp-${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}_${FOGLAMP_DISTRIBUTION}.tgz && \
     # Install any dependenies for the .deb file
-    apt -y install `dpkg -I ./foglamp/1.8.1/ubuntu1804/x86_64/foglamp-1.8.1-x86_64.deb | awk '/Depends:/{print$2}' | sed 's/,/ /g'` && \
-    dpkg-deb -R ./foglamp/1.8.1/ubuntu1804/x86_64/foglamp-1.8.1-x86_64.deb foglamp-1.8.1-x86_64 && \
-    cp -r foglamp-1.8.1-x86_64/usr /.  && \
+    apt -y install `dpkg -I ./foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb | awk '/Depends:/{print$2}' | sed 's/,/ /g'` && \
+    dpkg-deb -R ./foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb foglamp-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM} && \
+    cp -r foglamp-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/usr /.  && \
     mv /usr/local/foglamp/data.new /usr/local/foglamp/data && \
     # Install plugins
     # Comment out any packages that you don't need to make the image smaller
     mkdir /package_temp && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-filter-asset-1.8.1-x86_64.deb /package_temp/foglamp-filter-asset-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-filter-blocktest-1.8.1-x86_64.deb /package_temp/foglamp-filter-blocktest-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-filter-change-1.8.1-x86_64.deb /package_temp/foglamp-filter-change-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-filter-delta-1.8.1-x86_64.deb /package_temp/foglamp-filter-delta-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-filter-downsample-1.8.1-x86_64.deb /package_temp/foglamp-filter-downsample-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-filter-ema-1.8.1-x86_64.deb /package_temp/foglamp-filter-ema-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-filter-eventrate-1.8.1-x86_64.deb /package_temp/foglamp-filter-eventrate-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-filter-expression-1.8.1-x86_64.deb /package_temp/foglamp-filter-expression-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-filter-fft-1.8.1-x86_64.deb /package_temp/foglamp-filter-fft-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-filter-fft2-1.8.1-x86_64.deb /package_temp/foglamp-filter-fft2-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-filter-flirvalidity-1.8.1-x86_64.deb /package_temp/foglamp-filter-flirvalidity-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-filter-metadata-1.8.1-x86_64.deb /package_temp/foglamp-filter-metadata-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-filter-python27-1.8.1-x86_64.deb /package_temp/foglamp-filter-python27-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-filter-python35-1.8.1-x86_64.deb /package_temp/foglamp-filter-python35-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-filter-rate-1.8.1-x86_64.deb /package_temp/foglamp-filter-rate-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-filter-rms-1.8.1-x86_64.deb /package_temp/foglamp-filter-rms-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-filter-rms-trigger-1.8.1-x86_64.deb /package_temp/foglamp-filter-rms-trigger-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-filter-scale-1.8.1-x86_64.deb /package_temp/foglamp-filter-scale-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-filter-scale-set-1.8.1-x86_64.deb /package_temp/foglamp-filter-scale-set-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-filter-simple-python-1.8.1-x86_64.deb /package_temp/foglamp-filter-simple-python-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-filter-statistics-1.8.1-x86_64.deb /package_temp/foglamp-filter-statistics-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-filter-threshold-1.8.1-x86_64.deb /package_temp/foglamp-filter-threshold-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-filter-vibration-features-1.8.1-x86_64.deb /package_temp/foglamp-filter-vibration-features-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-north-gcp-1.8.1-x86_64.deb /package_temp/foglamp-north-gcp-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-north-harperdb-1.8.1-x86_64.deb /package_temp/foglamp-north-harperdb-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-north-http-north-1.8.1-x86_64.deb /package_temp/foglamp-north-http-north-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-north-httpc-1.8.1-x86_64.deb /package_temp/foglamp-north-httpc-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-north-influxdb-1.8.1-x86_64.deb /package_temp/foglamp-north-influxdb-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-north-influxdbcloud-1.8.1-x86_64.deb /package_temp/foglamp-north-influxdbcloud-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-north-kafka-1.8.1-x86_64.deb /package_temp/foglamp-north-kafka-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-north-kafka-python-1.8.1-x86_64.deb /package_temp/foglamp-north-kafka-python-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-north-opcua-1.8.1-x86_64.deb /package_temp/foglamp-north-opcua-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-north-splunk-1.8.1-x86_64.deb /package_temp/foglamp-north-splunk-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-north-thingspeak-1.8.1-x86_64.deb /package_temp/foglamp-north-thingspeak-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-notify-alexa-1.8.1-x86_64.deb /package_temp/foglamp-notify-alexa-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-notify-asset-1.8.1-x86_64.deb /package_temp/foglamp-notify-asset-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-notify-blynk-1.8.1-x86_64.deb /package_temp/foglamp-notify-blynk-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-notify-email-1.8.1-x86_64.deb /package_temp/foglamp-notify-email-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-notify-hangouts-1.8.1-x86_64.deb /package_temp/foglamp-notify-hangouts-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-notify-ifttt-1.8.1-x86_64.deb /package_temp/foglamp-notify-ifttt-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-notify-jira-1.8.1-x86_64.deb /package_temp/foglamp-notify-jira-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-notify-north-1.8.1-x86_64.deb /package_temp/foglamp-notify-north-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-notify-python35-1.8.1-x86_64.deb /package_temp/foglamp-notify-python35-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-notify-slack-1.8.1-x86_64.deb /package_temp/foglamp-notify-slack-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-notify-telegram-1.8.1-x86_64.deb /package_temp/foglamp-notify-telegram-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-rule-average-1.8.1-x86_64.deb /package_temp/foglamp-rule-average-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-rule-bad-bearing-1.8.1-x86_64.deb /package_temp/foglamp-rule-bad-bearing-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-rule-engine-failure-1.8.1-x86_64.deb /package_temp/foglamp-rule-engine-failure-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-rule-outofbound-1.8.1-x86_64.deb /package_temp/foglamp-rule-outofbound-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-rule-periodic-1.8.1-x86_64.deb /package_temp/foglamp-rule-periodic-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-rule-simple-expression-1.8.1-x86_64.deb /package_temp/foglamp-rule-simple-expression-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-service-notification-1.8.1-x86_64.deb /package_temp/foglamp-service-notification-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-south-beckhoff-1.8.1-x86_64.deb /package_temp/foglamp-south-beckhoff-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-south-benchmark-1.8.1-x86_64.deb /package_temp/foglamp-south-benchmark-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-south-cc2650-1.8.1-x86_64.deb /package_temp/foglamp-south-cc2650-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-south-coap-1.8.1-x86_64.deb /package_temp/foglamp-south-coap-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-south-csv-1.8.1-x86_64.deb /package_temp/foglamp-south-csv-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-south-CSV-Async-1.8.1-x86_64.deb /package_temp/foglamp-south-CSV-Async-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-south-csvplayback-1.8.1-x86_64.deb /package_temp/foglamp-south-csvplayback-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-south-digiducer-1.8.1-x86_64.deb /package_temp/foglamp-south-digiducer-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-south-dnp3-1.8.1-x86_64.deb /package_temp/foglamp-south-dnp3-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-south-expression-1.8.1-x86_64.deb /package_temp/foglamp-south-expression-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-south-flirax8-1.8.1-x86_64.deb /package_temp/foglamp-south-flirax8-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-south-http-south-1.8.1-x86_64.deb /package_temp/foglamp-south-http-south-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-south-modbus-1.8.1-x86_64.deb /package_temp/foglamp-south-modbus-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-south-modbustcp-1.8.1-x86_64.deb /package_temp/foglamp-south-modbustcp-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-south-mqtt-sparkplug-1.8.1-x86_64.deb /package_temp/foglamp-south-mqtt-sparkplug-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-south-opcua-1.8.1-x86_64.deb /package_temp/foglamp-south-opcua-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-south-openweathermap-1.8.1-x86_64.deb /package_temp/foglamp-south-openweathermap-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-south-person-detection-1.8.1-x86_64.deb /package_temp/foglamp-south-person-detection-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-south-phidget-1.8.1-x86_64.deb /package_temp/foglamp-south-phidget-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-south-playback-1.8.1-x86_64.deb /package_temp/foglamp-south-playback-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-south-random-1.8.1-x86_64.deb /package_temp/foglamp-south-random-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-south-randomwalk-1.8.1-x86_64.deb /package_temp/foglamp-south-randomwalk-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-south-roxtec-1.8.1-x86_64.deb /package_temp//foglamp-south-roxtec-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-south-s7-1.8.1-x86_64.deb /package_temp/foglamp-south-s7-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-south-sarcos-1.8.1-x86_64.deb /package_temp/foglamp-south-sarcos-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-south-sensorphone-1.8.1-x86_64.deb /package_temp/foglamp-south-sensorphone-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-south-sinusoid-1.8.1-x86_64.deb /package_temp/foglamp-south-sinusoid-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-south-systeminfo-1.8.1-x86_64.deb /package_temp/foglamp-south-systeminfo-1.8.1-x86_64/ && \
-    dpkg-deb -R /foglamp/1.8.1/ubuntu1804/x86_64/foglamp-south-wind-turbine-1.8.1-x86_64.deb /package_temp/foglamp-south-wind-turbine-1.8.1-x86_64/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-asset-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-filter-asset-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-blocktest-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-filter-blocktest-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-change-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-filter-change-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-delta-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-filter-delta-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-downsample-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-filter-downsample-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-ema-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-filter-ema-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-eventrate-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-filter-eventrate-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-expression-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-filter-expression-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-fft-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-filter-fft-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-fft2-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-filter-fft2-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-flirvalidity-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-filter-flirvalidity-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-metadata-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-filter-metadata-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-python27-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-filter-python27-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-python35-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-filter-python35-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-rate-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-filter-rate-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-rms-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-filter-rms-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-rms-trigger-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-filter-rms-trigger-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-scale-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-filter-scale-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-scale-set-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-filter-scale-set-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-simple-python-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-filter-simple-python-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-statistics-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-filter-statistics-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-threshold-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-filter-threshold-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-vibration-features-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-filter-vibration-features-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-north-gcp-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-north-gcp-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-north-harperdb-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-north-harperdb-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-north-http-north-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-north-http-north-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-north-httpc-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-north-httpc-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-north-influxdb-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-north-influxdb-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-north-influxdbcloud-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-north-influxdbcloud-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-north-kafka-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-north-kafka-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-north-opcua-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-north-opcua-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-north-splunk-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-north-splunk-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-north-thingspeak-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-north-thingspeak-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-alexa-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-notify-alexa-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-asset-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-notify-asset-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-blynk-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-notify-blynk-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-email-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-notify-email-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-hangouts-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-notify-hangouts-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-ifttt-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-notify-ifttt-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-jira-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-notify-jira-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-north-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-notify-north-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-python35-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-notify-python35-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-slack-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-notify-slack-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-telegram-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-notify-telegram-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-rule-average-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-rule-average-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-rule-bad-bearing-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-rule-bad-bearing-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-rule-engine-failure-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-rule-engine-failure-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-rule-outofbound-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-rule-outofbound-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-rule-periodic-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-rule-periodic-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-rule-simple-expression-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-rule-simple-expression-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-service-notification-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-service-notification-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-benchmark-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-south-benchmark-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-coap-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-south-coap-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-csv-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-south-csv-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-CSV-Async-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-south-CSV-Async-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-csvplayback-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-south-csvplayback-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-dnp3-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-south-dnp3-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-expression-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-south-expression-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-flirax8-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-south-flirax8-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-http-south-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-south-http-south-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-modbus-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-south-modbus-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-modbustcp-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-south-modbustcp-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-mqtt-sparkplug-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-south-mqtt-sparkplug-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-opcua-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-south-opcua-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-openweathermap-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-south-openweathermap-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-playback-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-south-playback-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-random-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-south-random-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-randomwalk-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-south-randomwalk-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-s7-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-south-s7-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-sarcos-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-south-sarcos-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-sinusoid-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-south-sinusoid-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
+    dpkg-deb -R /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-systeminfo-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb /package_temp/foglamp-south-systeminfo-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}/ && \
     # Copy plugins into place
     cp -r /package_temp/*/usr /.  && \
     # install required python packages
@@ -147,7 +142,7 @@ RUN apt update && apt upgrade -y && apt install wget rsyslog python3 python3-pip
     # Install the patched version of pybindll that allows pydnp3 install
     git clone https://github.com/ChargePoint/pybind11.git && \
     cd /pybind11 && \
-    python3 setup.py install && \ 
+    # python3 setup.py install && \ 
     cd / && \
     rm -r /pybind11 && \
     cd /usr/local/foglamp && \
@@ -172,5 +167,5 @@ CMD ["bash","/usr/local/foglamp/foglamp.sh"]
 LABEL maintainer="rob@raesemann.com" \
       author="Rob Raesemann" \
       target="Docker" \
-      version="1.8.1" \
+      version="${FOGLAMP_VERSION}" \
       description="FogLAMP IIoT Framework with pydnp3 running in Docker - Development and Debug tools - Installed from .deb packages"
