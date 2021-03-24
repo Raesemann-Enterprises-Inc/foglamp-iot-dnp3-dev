@@ -8,7 +8,7 @@ import uuid
 import logging
 import sys
 
-BOOTSTRAP_SERVERS = ['seeeduino1:9092']
+BOOTSTRAP_SERVERS = ['10.100.41.193:9093']
 KAFKA_TOPIC = 'iot-readings'
 
 _LOGGER = logging.getLogger(__name__)
@@ -78,10 +78,16 @@ class KafkaNorthPlugin(object):
         num_count = 0
         try:
             producer = KafkaProducer(bootstrap_servers=BOOTSTRAP_SERVERS,
-                api_version=(2,1),
+                security_protocol='SSL',
+                ssl_cafile='/etc/ssl/certs/jearootca.cer',
+                ssl_certfile='/etc/ssl/certs/testkafka.pem',
+                ssl_keyfile='/etc/ssl/certs/testkafja.pem',
+                ssl_password = 'changeme',
                 value_serializer=lambda m: json.dumps(m).encode('utf-8'))
 
+            _LOGGER.info('Sending')
             await self._send(producer, payload_block)
+
 
         except Exception as ex:
             _LOGGER.exception(f'Could not send payload, {ex}')
@@ -94,6 +100,7 @@ class KafkaNorthPlugin(object):
        
         producer.send(KAFKA_TOPIC, value=payload).add_errback(self.kafka_error)
         producer.flush()
+        _LOGGER.info('Sending complete')
 
 
 _LOGGER.info('starting')

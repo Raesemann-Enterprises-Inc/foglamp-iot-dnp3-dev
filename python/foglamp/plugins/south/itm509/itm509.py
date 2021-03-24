@@ -6,9 +6,9 @@ import uuid
 from foglamp.common import logger
 from foglamp.plugins.common import utils
 from foglamp.services.south import exceptions
-from foglamp.plugins.south.b100dnp3.dnp3_master import Dnp3_Master
+from foglamp.plugins.south.itm509.dnp3_master import Dnp3_Master
 
-""" Plugin for reading data from a B100 via DNP3 protocol
+""" Plugin for reading data from a ITM509 via DNP3 protocol
 """
 
 __author__ = "Rob Raesemann, rob@raesemann.com, +1 904-613-5988"
@@ -21,19 +21,19 @@ master = None
 
 _DEFAULT_CONFIG = {
     'plugin': {
-        'description': 'B100 South using DNP3 Service Plugin',
+        'description': 'ITM509 South using DNP3 Service Plugin',
         'type': 'string',
-        'default': 'b100dnp3',
+        'default': 'itm509',
         'readonly': 'true'
     },
     'assetName': {
         'description': 'Asset name',
         'type': 'string',
-        'default': 'B100',
+        'default': 'ITM509',
         'order': "1"
     },
     'address': {
-        'description': 'Address of B100',
+        'description': 'Address of ITM509',
         'type': 'string',
         'default': '127.0.0.1',
         'order': '2'
@@ -62,7 +62,7 @@ def plugin_info():
     """
 
     return {
-        'name': 'b100dnp3',
+        'name': 'itm509',
         'version': '1.0.0',
         'mode': 'poll',
         'type': 'south',
@@ -85,7 +85,7 @@ def open_dnp3_master(handle):
     outstation_id = int(handle['id']['value'])
 
     try:
-        _LOGGER.info('Initializing B100 DNP3 connection -- ip:{} id:{}'.format(outstation_address,outstation_id))
+        _LOGGER.info('Initializing ITM509 DNP3 connection -- ip:{} id:{}'.format(outstation_address,outstation_id))
         master = Dnp3_Master(outstation_address,outstation_id)
         master.open()
         return master
@@ -133,15 +133,15 @@ def get_readings(handle):
 
     # DNP3 register offsets for the variables we are concerned with for this plugin
 
-    LTC_TANK_TEMP_OFFSET = 120
-    TOP_OIL_TEMP_OFFSET = 150
-    WINDING_1_HOTSPOT_TEMP_OFFSET = 180
-    WINDING_2_HOTSPOT_TEMP_OFFSET = 210
-    WINDING_3_HOTSPOT_TEMP_OFFSET = 240
-    WINDING_1_CURRENT_AMPS_OFFSET = 281
-    WINDING_2_CURRENT_AMPS_OFFSET = 286
-    WINDING_3_CURRENT_AMPS_OFFSET = 291
-
+    
+    
+    TOP_OIL_TEMP_OFFSET = 16
+    LTC_TANK_TEMP_OFFSET = 21
+    AMBIENT_TEMP_OFFSET = 26
+    FAN_BANK_NUM1_CURRENT_OFFSET = 31
+    FAN_BANK_NUM2_CURRENT_OFFSET = 36
+    B_PHASE_WINDING_TEMP_OFFSET = 51
+    
 
     try:
         all_dnp3_readings = master.values
@@ -150,12 +150,10 @@ def get_readings(handle):
         readings = {
             'top_oil_temp': ((all_dnp3_readings['analog'][TOP_OIL_TEMP_OFFSET]/1000)*(9/5)) + 32,
             'ltc_tank_temp': ((all_dnp3_readings['analog'][LTC_TANK_TEMP_OFFSET]/1000)*(9/5)) + 32,
-            'winding_1_hotspot_temp' : ((all_dnp3_readings['analog'][WINDING_1_HOTSPOT_TEMP_OFFSET]/1000)*(9/5)) + 32,
-            'winding_2_hotspot_temp' : ((all_dnp3_readings['analog'][WINDING_2_HOTSPOT_TEMP_OFFSET]/1000)*(9/5)) + 32,
-            'winding_3_hotspot_temp' : ((all_dnp3_readings['analog'][WINDING_3_HOTSPOT_TEMP_OFFSET]/1000)*(9/5)) + 32,
-            'winding_1_current_amps' : all_dnp3_readings['analog'][WINDING_1_CURRENT_AMPS_OFFSET]/100,
-            'winding_2_current_amps' : all_dnp3_readings['analog'][WINDING_2_CURRENT_AMPS_OFFSET]/100,
-            'winding_3_current_amps' : all_dnp3_readings['analog'][WINDING_3_CURRENT_AMPS_OFFSET]/100,
+            'ambient_temp': ((all_dnp3_readings['analog'][AMBIENT_TEMP_OFFSET]/1000)*(9/5)) + 32,
+            'fan_bank_num1_current' : all_dnp3_readings['analog'][FAN_BANK_NUM1_CURRENT_OFFSET],
+            'fan_bank_num2_current' : all_dnp3_readings['analog'][FAN_BANK_NUM2_CURRENT_OFFSET],
+            'b_phase_winding_temp' : all_dnp3_readings['analog'][B_PHASE_WINDING_TEMP_OFFSET]
         }
 
     except Exception as ex:
@@ -209,7 +207,7 @@ def plugin_reconfigure(handle, new_config):
     Raises:
     """
 
-    _LOGGER.info("Old config for B100 plugin {} \n new config {}".format(handle, new_config))
+    _LOGGER.info("Old config for ITM509 plugin {} \n new config {}".format(handle, new_config))
 
     diff = utils.get_diff(handle, new_config)
 
@@ -217,7 +215,7 @@ def plugin_reconfigure(handle, new_config):
         plugin_shutdown(handle)
         new_handle = plugin_init(new_config)
         new_handle['restart'] = 'yes'
-        _LOGGER.info("Restarting B100 DNP3 plugin due to change in configuration keys [{}]".format(', '.join(diff)))
+        _LOGGER.info("Restarting ITM509 DNP3 plugin due to change in configuration keys [{}]".format(', '.join(diff)))
 
     else:
         new_handle = copy.deepcopy(new_config)
@@ -241,5 +239,5 @@ def plugin_shutdown(handle):
         return_message = "connection_closed"
         _LOGGER.info(return_message)
     except Exception as ex:
-        _LOGGER.exception('Error in shutting down B100 plugin; {}',format(ex))
+        _LOGGER.exception('Error in shutting down ITM509 plugin; {}',format(ex))
         raise

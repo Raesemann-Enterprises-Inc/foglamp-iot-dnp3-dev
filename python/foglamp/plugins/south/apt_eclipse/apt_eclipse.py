@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import copy
 import json
 import logging
@@ -6,7 +8,7 @@ import uuid
 from foglamp.common import logger
 from foglamp.plugins.common import utils
 from foglamp.services.south import exceptions
-from foglamp.plugins.south.b100dnp3.dnp3_master import Dnp3_Master
+from foglamp.plugins.south.apt_eclipse.dnp3_master import Dnp3_Master
 
 """ Plugin for reading data from a B100 via DNP3 protocol
 """
@@ -21,19 +23,19 @@ master = None
 
 _DEFAULT_CONFIG = {
     'plugin': {
-        'description': 'B100 South using DNP3 Service Plugin',
+        'description': 'APT Exclipse South using DNP3 Service Plugin',
         'type': 'string',
-        'default': 'b100dnp3',
+        'default': 'apt_eclipse',
         'readonly': 'true'
     },
     'assetName': {
         'description': 'Asset name',
         'type': 'string',
-        'default': 'B100',
+        'default': 'apt_eclipse',
         'order': "1"
     },
     'address': {
-        'description': 'Address of B100',
+        'description': 'Address of Eclipse',
         'type': 'string',
         'default': '127.0.0.1',
         'order': '2'
@@ -62,7 +64,7 @@ def plugin_info():
     """
 
     return {
-        'name': 'b100dnp3',
+        'name': 'apt_eclipse',
         'version': '1.0.0',
         'mode': 'poll',
         'type': 'south',
@@ -85,7 +87,7 @@ def open_dnp3_master(handle):
     outstation_id = int(handle['id']['value'])
 
     try:
-        _LOGGER.info('Initializing B100 DNP3 connection -- ip:{} id:{}'.format(outstation_address,outstation_id))
+        _LOGGER.info('Initializing APT Eclipse DNP3 connection -- ip:{} id:{}'.format(outstation_address,outstation_id))
         master = Dnp3_Master(outstation_address,outstation_id)
         master.open()
         return master
@@ -132,30 +134,24 @@ def get_readings(handle):
         return
 
     # DNP3 register offsets for the variables we are concerned with for this plugin
-
-    LTC_TANK_TEMP_OFFSET = 120
-    TOP_OIL_TEMP_OFFSET = 150
-    WINDING_1_HOTSPOT_TEMP_OFFSET = 180
-    WINDING_2_HOTSPOT_TEMP_OFFSET = 210
-    WINDING_3_HOTSPOT_TEMP_OFFSET = 240
-    WINDING_1_CURRENT_AMPS_OFFSET = 281
-    WINDING_2_CURRENT_AMPS_OFFSET = 286
-    WINDING_3_CURRENT_AMPS_OFFSET = 291
-
+    LTC_TANK_TEMP_OFFSET = 6
+    TOP_OIL_TEMP_OFFSET = 7
+    B_PHASE_WINDING_CURRENT_OFFSET = 2
+    TAP_CHANGER_MOTOR_CURRENT_OFFSET = 4
+    FAN_BANK_1_CURRENT_OFFSET = 5
+    FAN_BANK_2_CURRENT_OFFSET = 6
 
     try:
         all_dnp3_readings = master.values
         
         # Assemble the readings using the registers that we are concerned about. Apply scaling factor.
         readings = {
-            'top_oil_temp': ((all_dnp3_readings['analog'][TOP_OIL_TEMP_OFFSET]/1000)*(9/5)) + 32,
-            'ltc_tank_temp': ((all_dnp3_readings['analog'][LTC_TANK_TEMP_OFFSET]/1000)*(9/5)) + 32,
-            'winding_1_hotspot_temp' : ((all_dnp3_readings['analog'][WINDING_1_HOTSPOT_TEMP_OFFSET]/1000)*(9/5)) + 32,
-            'winding_2_hotspot_temp' : ((all_dnp3_readings['analog'][WINDING_2_HOTSPOT_TEMP_OFFSET]/1000)*(9/5)) + 32,
-            'winding_3_hotspot_temp' : ((all_dnp3_readings['analog'][WINDING_3_HOTSPOT_TEMP_OFFSET]/1000)*(9/5)) + 32,
-            'winding_1_current_amps' : all_dnp3_readings['analog'][WINDING_1_CURRENT_AMPS_OFFSET]/100,
-            'winding_2_current_amps' : all_dnp3_readings['analog'][WINDING_2_CURRENT_AMPS_OFFSET]/100,
-            'winding_3_current_amps' : all_dnp3_readings['analog'][WINDING_3_CURRENT_AMPS_OFFSET]/100,
+            'top_oil_temp': all_dnp3_readings['analog'][TOP_OIL_TEMP_OFFSET],
+            'ltc_tank_temp': all_dnp3_readings['analog'][LTC_TANK_TEMP_OFFSET],
+            'b_phase_winding_current' : all_dnp3_readings['analog'][B_PHASE_WINDING_CURRENT_OFFSET],
+            'tap_changer_motor_current' : all_dnp3_readings['analog'][TAP_CHANGER_MOTOR_CURRENT_OFFSET],
+            'fan_bank_1_current' : all_dnp3_readings['analog'][FAN_BANK_1_CURRENT_OFFSET],
+            'fan_bank_2_current' : all_dnp3_readings['analog'][FAN_BANK_2_CURRENT_OFFSET]
         }
 
     except Exception as ex:
@@ -223,7 +219,7 @@ def plugin_reconfigure(handle, new_config):
         new_handle = copy.deepcopy(new_config)
         new_handle['restart'] = 'yes'
 
-    close_dnp3_master()
+    master.close()
     return new_handle
 
 
@@ -238,6 +234,7 @@ def plugin_shutdown(handle):
     Raises:
     """
     try:
+        master.close()
         return_message = "connection_closed"
         _LOGGER.info(return_message)
     except Exception as ex:

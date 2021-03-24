@@ -6,9 +6,9 @@ import uuid
 from foglamp.common import logger
 from foglamp.plugins.common import utils
 from foglamp.services.south import exceptions
-from foglamp.plugins.south.b100dnp3.dnp3_master import Dnp3_Master
+from foglamp.plugins.south.vaisala_opt100.dnp3_master import Dnp3_Master
 
-""" Plugin for reading data from a B100 via DNP3 protocol
+""" Plugin for reading data from a OPT100 via DNP3 protocol
 """
 
 __author__ = "Rob Raesemann, rob@raesemann.com, +1 904-613-5988"
@@ -21,19 +21,19 @@ master = None
 
 _DEFAULT_CONFIG = {
     'plugin': {
-        'description': 'B100 South using DNP3 Service Plugin',
+        'description': 'OPT100 South using DNP3 Service Plugin',
         'type': 'string',
-        'default': 'b100dnp3',
+        'default': 'vaisala_opt100',
         'readonly': 'true'
     },
     'assetName': {
         'description': 'Asset name',
         'type': 'string',
-        'default': 'B100',
+        'default': 'OPT100',
         'order': "1"
     },
     'address': {
-        'description': 'Address of B100',
+        'description': 'Address of OPT100',
         'type': 'string',
         'default': '127.0.0.1',
         'order': '2'
@@ -62,7 +62,7 @@ def plugin_info():
     """
 
     return {
-        'name': 'b100dnp3',
+        'name': 'vaisala_opt100',
         'version': '1.0.0',
         'mode': 'poll',
         'type': 'south',
@@ -85,7 +85,7 @@ def open_dnp3_master(handle):
     outstation_id = int(handle['id']['value'])
 
     try:
-        _LOGGER.info('Initializing B100 DNP3 connection -- ip:{} id:{}'.format(outstation_address,outstation_id))
+        _LOGGER.info('Initializing OPT100 DNP3 connection -- ip:{} id:{}'.format(outstation_address,outstation_id))
         master = Dnp3_Master(outstation_address,outstation_id)
         master.open()
         return master
@@ -133,29 +133,71 @@ def get_readings(handle):
 
     # DNP3 register offsets for the variables we are concerned with for this plugin
 
-    LTC_TANK_TEMP_OFFSET = 120
-    TOP_OIL_TEMP_OFFSET = 150
-    WINDING_1_HOTSPOT_TEMP_OFFSET = 180
-    WINDING_2_HOTSPOT_TEMP_OFFSET = 210
-    WINDING_3_HOTSPOT_TEMP_OFFSET = 240
-    WINDING_1_CURRENT_AMPS_OFFSET = 281
-    WINDING_2_CURRENT_AMPS_OFFSET = 286
-    WINDING_3_CURRENT_AMPS_OFFSET = 291
+    METHANE_OFFSET = 0
+    ACETYLENE_OFFSET = 1
+    ETHYLENE_OFFSET = 2
+    ETHANE_OFFSET = 3
+    CARBON_MONOXIDE_OFFSET = 4
+    CARBON_DIOXIDE_OFFSET = 5
+    TCG_OFFSET = 6
+    HYDROGEN_OFFSET = 7
+    OIL_MOISTURE_OFFSET = 8
+    OIL_TEMP_OFFSET = 9
+    MOISTURE_IN_OIL_OFFSET = 10
+    GAS_PRESSURE_OFFSET = 11
+    _24HR_METHANE_AVERAGE_OFFSET = 20
+    _24HR_ACETYLENE_AVERAGE_OFFSET = 21
+    _24HR_ETHYLENE_AVERAGE_OFFSETT = 22
+    _24HR_ETHANE_AVERAGE_OFFSET = 23
+    _24HR_CARBON_MONOXIDE_AVERAGE_OFFSET = 24
+    _24HR_CARBON_DIOXIDE_AVERAGE_OFFSET = 25
+    _24HR_TCG_AVERAGE_OFFSET = 26
+    _24HR_HYDROGEN_AVERAGE_OFFSET = 27
+    _24HR_OIL_MOISTURE_AVERAGE_OFFSET = 28
+    _24HR_GAS_PRESSURE_AVERAGE_OFFSET = 29
+    METHANE_HYDROGEN_RATIO_OFFSET = 100
+    ACETYLENE_ETHYLENE_RATIO_OFFSET = 101
+    ACETYLENE_METHANE_RATIO_OFFSET = 102
+    ETHANE_ACETYLENE_RATIO_OFFSET = 103
+    ETHYLENE_ETHANE_RATIO_OFFSET = 104
+    CARBON_DIOXIDE_CARBON_MONOXIDE_RATIO_OFFSET = 105
 
 
     try:
         all_dnp3_readings = master.values
+
+        
         
         # Assemble the readings using the registers that we are concerned about. Apply scaling factor.
         readings = {
-            'top_oil_temp': ((all_dnp3_readings['analog'][TOP_OIL_TEMP_OFFSET]/1000)*(9/5)) + 32,
-            'ltc_tank_temp': ((all_dnp3_readings['analog'][LTC_TANK_TEMP_OFFSET]/1000)*(9/5)) + 32,
-            'winding_1_hotspot_temp' : ((all_dnp3_readings['analog'][WINDING_1_HOTSPOT_TEMP_OFFSET]/1000)*(9/5)) + 32,
-            'winding_2_hotspot_temp' : ((all_dnp3_readings['analog'][WINDING_2_HOTSPOT_TEMP_OFFSET]/1000)*(9/5)) + 32,
-            'winding_3_hotspot_temp' : ((all_dnp3_readings['analog'][WINDING_3_HOTSPOT_TEMP_OFFSET]/1000)*(9/5)) + 32,
-            'winding_1_current_amps' : all_dnp3_readings['analog'][WINDING_1_CURRENT_AMPS_OFFSET]/100,
-            'winding_2_current_amps' : all_dnp3_readings['analog'][WINDING_2_CURRENT_AMPS_OFFSET]/100,
-            'winding_3_current_amps' : all_dnp3_readings['analog'][WINDING_3_CURRENT_AMPS_OFFSET]/100,
+            'methane' : all_dnp3_readings['analog'][METHANE_OFFSET],
+            'acetylene' : all_dnp3_readings['analog'][ACETYLENE_OFFSET],
+            'ethylene' : all_dnp3_readings['analog'][ETHYLENE_OFFSET],
+            'ethane' : all_dnp3_readings['analog'][ETHANE_OFFSET],
+            'carbon_monoxide' : all_dnp3_readings['analog'][CARBON_MONOXIDE_OFFSET],
+            'carbon_dioxide' : all_dnp3_readings['analog'][CARBON_DIOXIDE_OFFSET],
+            'tcg' : all_dnp3_readings['analog'][TCG_OFFSET],
+            'hydrogen' : all_dnp3_readings['analog'][HYDROGEN_OFFSET],
+            'oil_moisture' : all_dnp3_readings['analog'][OIL_MOISTURE_OFFSET],
+            'oil_temp' : all_dnp3_readings['analog'][OIL_TEMP_OFFSET],
+            'moisture_in_oil' : all_dnp3_readings['analog'][MOISTURE_IN_OIL_OFFSET],
+            'gas_pressure' : all_dnp3_readings['analog'][GAS_PRESSURE_OFFSET],
+            '24hr_methane_average' : all_dnp3_readings['analog'][_24HR_METHANE_AVERAGE_OFFSET],
+            '24hr_acetylene_average' : all_dnp3_readings['analog'][_24HR_ACETYLENE_AVERAGE_OFFSET],
+            '24hr_ethylene_average' : all_dnp3_readings['analog'][_24HR_ETHYLENE_AVERAGE_OFFSETT],
+            '24hr_ehthane_average' : all_dnp3_readings['analog'][_24HR_ETHANE_AVERAGE_OFFSET],
+            '24hr_carbon_monoxide_average' : all_dnp3_readings['analog'][_24HR_CARBON_MONOXIDE_AVERAGE_OFFSET],
+            '24hr_carbon_dioxide_average' : all_dnp3_readings['analog'][_24HR_CARBON_DIOXIDE_AVERAGE_OFFSET],
+            '24hr_tcg_average' : all_dnp3_readings['analog'][_24HR_TCG_AVERAGE_OFFSET],
+            '24hr_hydrogen_average' : all_dnp3_readings['analog'][_24HR_HYDROGEN_AVERAGE_OFFSET],
+            '24hr_oil_moisture_average' : all_dnp3_readings['analog'][_24HR_OIL_MOISTURE_AVERAGE_OFFSET],
+            '24hr_gas_pressure_average' : all_dnp3_readings['analog'][_24HR_GAS_PRESSURE_AVERAGE_OFFSET],
+            'methane_hydrogen_ratio' : all_dnp3_readings['analog'][METHANE_HYDROGEN_RATIO_OFFSET],
+            'acetylene_ethylene_ratio' : all_dnp3_readings['analog'][ACETYLENE_ETHYLENE_RATIO_OFFSET],
+            'acetylene_methane_ratio' : all_dnp3_readings['analog'][ACETYLENE_METHANE_RATIO_OFFSET],
+            # 'ethane_acetylene_ratio' : all_dnp3_readings['analog'][ETHANE_ACETYLENE_RATIO_OFFSET],
+            'ethylene_ethane_ratio' : all_dnp3_readings['analog'][ETHYLENE_ETHANE_RATIO_OFFSET],
+            'carbon_dioxide_carbon_monoxide_ratio' : all_dnp3_readings['analog'][CARBON_DIOXIDE_CARBON_MONOXIDE_RATIO_OFFSET]
         }
 
     except Exception as ex:
@@ -209,7 +251,7 @@ def plugin_reconfigure(handle, new_config):
     Raises:
     """
 
-    _LOGGER.info("Old config for B100 plugin {} \n new config {}".format(handle, new_config))
+    _LOGGER.info("Old config for OPT100 plugin {} \n new config {}".format(handle, new_config))
 
     diff = utils.get_diff(handle, new_config)
 
@@ -217,7 +259,7 @@ def plugin_reconfigure(handle, new_config):
         plugin_shutdown(handle)
         new_handle = plugin_init(new_config)
         new_handle['restart'] = 'yes'
-        _LOGGER.info("Restarting B100 DNP3 plugin due to change in configuration keys [{}]".format(', '.join(diff)))
+        _LOGGER.info("Restarting OPT100 DNP3 plugin due to change in configuration keys [{}]".format(', '.join(diff)))
 
     else:
         new_handle = copy.deepcopy(new_config)
@@ -241,5 +283,5 @@ def plugin_shutdown(handle):
         return_message = "connection_closed"
         _LOGGER.info(return_message)
     except Exception as ex:
-        _LOGGER.exception('Error in shutting down B100 plugin; {}',format(ex))
+        _LOGGER.exception('Error in shutting down OPT100 plugin; {}',format(ex))
         raise

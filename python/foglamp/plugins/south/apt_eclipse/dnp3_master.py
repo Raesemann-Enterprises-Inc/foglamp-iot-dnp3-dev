@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from pydnp3 import opendnp3, openpal, asiopal, asiodnp3
 import time
 import logging
@@ -102,7 +104,4 @@ class Dnp3_Master():
         self._master.close()
 
     def __del__(self):
-        channel.Shutdown()
-        channel = None
-        manager.Shutdown()
-        manager = None
+        self._master.close()

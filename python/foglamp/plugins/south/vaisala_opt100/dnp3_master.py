@@ -102,7 +102,4 @@ class Dnp3_Master():
         self._master.close()
 
     def __del__(self):
-        channel.Shutdown()
-        channel = None
-        manager.Shutdown()
-        manager = None
+        self.close()
