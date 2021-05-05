@@ -8,7 +8,7 @@ import uuid
 import logging
 import sys
 
-BOOTSTRAP_SERVERS = ['10.100.41.193:9093']
+BOOTSTRAP_SERVERS = ['jeainnova2d1:9093']
 KAFKA_TOPIC = 'iot-readings'
 
 _LOGGER = logging.getLogger(__name__)

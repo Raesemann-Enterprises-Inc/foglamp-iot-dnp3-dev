@@ -41,36 +41,43 @@ _DEFAULT_CONFIG = {
     'bootstrap_servers': {
         'description': 'Kafka Bootstrap Server',
         'type': 'string',
-        'default': '10.100.41.193:9093',
+        'default': 'jeainnova2d1:9093',
         'order': '2',
         'displayName': 'Boostrap Server'
+    },
+    'ssl_enabled':{
+        'description': 'Enable SSL Mode - requires PEM and CER file and ssl password',
+        'type': 'boolean',
+        'default': 'True',
+        'order': '3',
+        'displayName': 'SSL Enabled'
     },
     'pem_file': {
         'description': 'Client PEM File Path',
         'type': 'string',
         'default': '/etc/ssl/certs/testkafka.pem',
-        'order': '3',
+        'order': '4',
         'displayName': 'Client PEM File Path'
     },
     'cer_file': {
         'description': 'Root CA CER File Path',
         'type': 'string',
         'default': '/etc/ssl/certs/jearootca.cer',
-        'order': '4',
+        'order': '5',
         'displayName': 'Root CA CER File Path'
     },
     'ssl_password': {
         'description': 'SSL key password for kafka certificate',
         'type': 'string',
-        'default': 'changeme',
-        'order': '5',
+        'default': 'changeit',
+        'order': '6',
         'displayName': 'SSL Password'
     },
     'kafka_topic': {
         'description': 'Kafka Topic',
         'type': 'string',
         'default': 'iot-readings',
-        'order': '6',
+        'order': '7',
         'displayName': 'Kafka Topic'
     },
 }
@@ -86,27 +93,17 @@ def plugin_info():
     }
 
 
-def plugin_init(data):
+def plugin_init(config):
     _LOGGER.info('Initializing Kafka North Python Plugin')
-    global kafka_north, config
-    kafka_north = KafkaNorthPlugin()
-    config = data
-    
-    ssl_cafile_path = config["cer_file"]["value"]
-    pem_file_path = config["pem_file"]["value"]
-    
-    _LOGGER.info(f'Initializing plugin with boostrap servers: {config["bootstrap_servers"]["value"]} and topic: {config["kafka_topic"]["value"]} password: {config["ssl_password"]["value"]}')
-    _LOGGER.info(f'Testing SSL cafile exists: {str(path.exists(ssl_cafile_path))}')
-    _LOGGER.info(f'Testing SSL pemfile exists: {str(path.exists(pem_file_path))}')
-        
+    global kafka_north
+    config['kafka_north'] = KafkaNorthPlugin(config)
     return config
 
 
-async def plugin_send(data, payload, stream_id):
+async def plugin_send(handle, payload, stream_id):
     # stream_id (log?)
     try:
-        # _LOGGER.info(f'Kafka North Python - plugin_send: {stream_id}')
-        is_data_sent, new_last_object_id, num_sent = await kafka_north.send_payloads(payload)
+        is_data_sent, new_last_object_id, num_sent = await handle['kafka_north'].send_payloads(payload)
     except asyncio.CancelledError as ex:
         _LOGGER.exception(f'Exception occurred in plugin_send: {ex}')
     else:
@@ -119,16 +116,31 @@ def plugin_shutdown(data):
 
 
 # TODO: North plugin can not be reconfigured? (per callback mechanism)
-def plugin_reconfigure():
-    pass
-
+def plugin_reconfigure(new_config):
+    _LOGGER.info(f'Reconfiguring Kafka North Plugin: {new_config}')
+    kafka_north = None
+    new_config['kafka_north'] = KafkaNorthPlugin(new_config)
+    return new_config
 
 class KafkaNorthPlugin(object):
     """ North Kafka Plugin """
 
-    def __init__(self):
-        self.event_loop = asyncio.get_event_loop()
+    def __init__(self,config):
+        _LOGGER.info(f'Initializing plugin with boostrap servers: {config["bootstrap_servers"]["value"]} and topic: {config["kafka_topic"]["value"]} password: {config["ssl_password"]["value"]} ssl_elabled: {config["ssl_enabled"]["value"]}')
+        _LOGGER.info(f'Testing SSL cafile exists: {str(path.exists(config["cer_file"]["value"]))}')
+        _LOGGER.info(f'Testing SSL pemfile exists: {str(path.exists(config["pem_file"]["value"]))}')
+
+        self.ssl_cafile_path = config["cer_file"]["value"]
+        self.pem_file_path = config["pem_file"]["value"]
+        self.password = config['ssl_password']['value']
+        self.bootstrap_servers = config["bootstrap_servers"]["value"]
+        self.topic = config["kafka_topic"]["value"]
+        if config['ssl_enabled']['value'] == 'True' or config['ssl_enabled']['value'] == 'true':
+            self.ssl_enabled = True
+        else:
+            self.ssl_enabled = False
         
+        self.event_loop = asyncio.get_event_loop()
             
     def kafka_error(self, error):
         _LOGGER.error(f'Kafka callback with error: {error}')
@@ -164,31 +176,25 @@ class KafkaNorthPlugin(object):
 
         num_count = 0
         try:
-            ssl_cafile_path = config["cer_file"]["value"]
-            pem_file_path = config["pem_file"]["value"]
-            password = config['ssl_password']['value']
-            bootstrap_servers = config["bootstrap_servers"]["value"]
             
-            _LOGGER.info(f'server: {bootstrap_servers} cafile: {ssl_cafile_path}  pemfile: {pem_file_path} password: {password}')
+            _LOGGER.info(f'Sending payloads:  server: {self.bootstrap_servers} cafile: {self.ssl_cafile_path}  pemfile: {self.pem_file_path} password: {self.password}')
 
-            producer = KafkaProducer(bootstrap_servers=bootstrap_servers, 
-                # security_protocol='SSL',
-                # ssl_cafile=ssl_cafile_path,
-                # ssl_certfile=pem_file_path,
-                # ssl_keyfile=pem_file_path,
-                # ssl_password=password,
-                value_serializer=lambda x: json.dumps(x).encode('utf-8'))
+            if self.ssl_enabled == True:
+                producer = KafkaProducer(bootstrap_servers=self.bootstrap_servers, 
+                    security_protocol='SSL',
+                    ssl_cafile=self.ssl_cafile_path,
+                    ssl_certfile=self.pem_file_path,
+                    ssl_keyfile=self.pem_file_path,
+                    ssl_password=self.password,
+                    value_serializer=lambda x: json.dumps(x).encode('utf-8'))
+            else:
+                producer = KafkaProducer(bootstrap_servers=self.bootstrap_servers, 
+                    value_serializer=lambda x: json.dumps(x).encode('utf-8'))
 
-            await self._send(producer, payload_block)
+            producer.send(self.topic, value=payload_block).add_errback(self.kafka_error)
+            producer.flush()
         except Exception as ex:
             _LOGGER.exception(f'Exception sending payload: {ex}')
         else: 
             num_count += len(payload_block)
         return num_count
-
-    async def _send(self, producer, payload):
-        """ Send the payload, using provided producer """
-        topic = config["kafka_topic"]["value"]
-        _LOGGER.info(f'topic: {topic}')
-        producer.send(topic, value=payload).add_errback(self.kafka_error)
-        producer.flush()

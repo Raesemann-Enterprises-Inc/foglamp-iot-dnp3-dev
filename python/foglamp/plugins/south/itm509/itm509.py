@@ -148,9 +148,9 @@ def get_readings(handle):
         
         # Assemble the readings using the registers that we are concerned about. Apply scaling factor.
         readings = {
-            'top_oil_temp': ((all_dnp3_readings['analog'][TOP_OIL_TEMP_OFFSET]/1000)*(9/5)) + 32,
-            'ltc_tank_temp': ((all_dnp3_readings['analog'][LTC_TANK_TEMP_OFFSET]/1000)*(9/5)) + 32,
-            'ambient_temp': ((all_dnp3_readings['analog'][AMBIENT_TEMP_OFFSET]/1000)*(9/5)) + 32,
+            'top_oil_temp': all_dnp3_readings['analog'][TOP_OIL_TEMP_OFFSET],
+            'ltc_tank_temp': all_dnp3_readings['analog'][LTC_TANK_TEMP_OFFSET],
+            'ambient_temp': all_dnp3_readings['analog'][AMBIENT_TEMP_OFFSET],  
             'fan_bank_num1_current' : all_dnp3_readings['analog'][FAN_BANK_NUM1_CURRENT_OFFSET],
             'fan_bank_num2_current' : all_dnp3_readings['analog'][FAN_BANK_NUM2_CURRENT_OFFSET],
             'b_phase_winding_temp' : all_dnp3_readings['analog'][B_PHASE_WINDING_TEMP_OFFSET]

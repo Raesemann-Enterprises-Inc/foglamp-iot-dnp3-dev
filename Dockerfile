@@ -50,16 +50,13 @@ COPY --from=build /tmp_cmake /
 COPY --from=build /tmp_dnp3 /
 
 RUN apt update && apt install -y --no-install-recommends \
-    #build-essential \
-    #git \
+    # tools to make troubleshooting easier from inside the container
+    dnsutils \
     inetutils-telnet \
+    iproute2 \
     iputils-ping \
-    #libssl-dev \
     nano \
-    #python-dev \
-    #python3 \
-    #python3-dev \
-    #python3-pip \
+    # required packages
     rsyslog \
     sed \
     wget && \
@@ -115,7 +112,6 @@ RUN apt update && apt install -y --no-install-recommends \
     apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-threshold-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
     apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-vibration-features-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
     # North Plugins
-    # apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-north-gcp-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
     apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-north-harperdb-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
     apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-north-http-north-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
     apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-north-httpc-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
@@ -123,24 +119,16 @@ RUN apt update && apt install -y --no-install-recommends \
     apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-north-influxdbcloud-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
     apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-north-kafka-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
     apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-north-opcua-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    # apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-north-splunk-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    # apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-north-thingspeak-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
     # Notification Plugins
     apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-alexa-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
     apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-asset-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    # apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-blynk-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
     apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-email-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    # apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-hangouts-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
     apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-ifttt-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    # apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-jira-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
     apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-north-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
     apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-python35-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
     apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-slack-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    # apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-telegram-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
     # Rule Plugins
     apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-rule-average-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    # apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-rule-bad-bearing-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    # apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-rule-engine-failure-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
     apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-rule-outofbound-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
     apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-rule-periodic-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
     apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-rule-simple-expression-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
@@ -163,7 +151,6 @@ RUN apt update && apt install -y --no-install-recommends \
     apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-random-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
     apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-randomwalk-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
     apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-s7-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    # apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-sarcos-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
     apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-sinusoid-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
     apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-systeminfo-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
     # Cleanup
@@ -179,17 +166,15 @@ RUN apt update && apt install -y --no-install-recommends \
 # Install Python plugins
 COPY ./python /usr/local/foglamp/python/
 
-RUN python3 -m pip install --upgrade -r /usr/local/foglamp/python/requirements-b100dnp3.txt && \
-    python3 -m pip install --upgrade -r /usr/local/foglamp/python/requirements-kafka-python.txt && \
-    python3 -m pip install --upgrade -r /usr/local/foglamp/python/requirements-apt_eclipse.txt && \
-    python3 -m pip install --upgrade -r /usr/local/foglamp/python/requirements-vaisala_opt100.txt
+# Install dependencies from all of the requirements files in /usr/local/foglamp/python
+RUN for i in /usr/local/foglamp/python/requirements*.txt; do python3 -m pip install --upgrade -r $i; done;
+
 
 # Copy foglamp startup script
 COPY foglamp.sh /usr/local/foglamp/foglamp.sh
 
-# Copy Kakfa certs to /etc/ssl/certs
-COPY /etc/ssl/certs/jearootca.cer /etc/ssl/certs/jearootca.cer
-COPY /etc/ssl/certs/testkafka.pem /etc/ssl/certs/testkafka.pem
+# Copy Kakfa certs and resolv.conf to container
+COPY /etc /etc
 
 ENV FOGLAMP_ROOT=/usr/local/foglamp
 
