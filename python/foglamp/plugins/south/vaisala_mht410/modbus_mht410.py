@@ -50,7 +50,7 @@ class ModbusHht410:
 
         if self.connection is None:
             try:
-                self._connection = ModbusClient(address, port=port)
+                self._connection = ModbusClient(self._ip_address, port=self._port)
             except:
                 raise ValueError
 

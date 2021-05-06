@@ -132,9 +132,6 @@ def get_readings(handle):
         return
 
     # DNP3 register offsets for the variables we are concerned with for this plugin
-
-    
-    
     TOP_OIL_TEMP_OFFSET = 16
     LTC_TANK_TEMP_OFFSET = 21
     AMBIENT_TEMP_OFFSET = 26

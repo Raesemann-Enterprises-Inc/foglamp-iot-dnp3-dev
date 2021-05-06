@@ -60,8 +60,8 @@ class ModbusTM1:
             # Read the first 5 holding registers
             read =self._connection.read_holding_registers(address = 0, count = 5, unit=1)
             values = read.registers
-        except ModbusIOException as ex:
-            _LOGGER.error(f'Modbus IO Exception: {ex}')
+        except Exception as ex:
+            _LOGGER.error(f'Error reading registers: {ex}')
 
         # Processed the returned registers to scaled readings. 
         # Refer to page 35 of TM1 manual for register formats and scaling information

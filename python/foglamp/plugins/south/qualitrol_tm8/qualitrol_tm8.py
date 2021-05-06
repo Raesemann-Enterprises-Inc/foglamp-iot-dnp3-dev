@@ -6,7 +6,7 @@ import uuid
 from foglamp.common import logger
 from foglamp.plugins.common import utils
 from foglamp.services.south import exceptions
-from foglamp.plugins.south.qualitrol-tm8.dnp3_master import Dnp3_Master
+from foglamp.plugins.south.qualitrol_tm8.dnp3_master import Dnp3_Master
 
 """ Plugin for reading data from a OPT100 via DNP3 protocol
 """
@@ -165,8 +165,6 @@ def get_readings(handle):
 
     try:
         all_dnp3_readings = master.values
-
-        
         
         # Assemble the readings using the registers that we are concerned about. Apply scaling factor.
         readings = {
@@ -199,11 +197,10 @@ def get_readings(handle):
             'ethylene_ethane_ratio' : all_dnp3_readings['analog'][ETHYLENE_ETHANE_RATIO_OFFSET],
             'carbon_dioxide_carbon_monoxide_ratio' : all_dnp3_readings['analog'][CARBON_DIOXIDE_CARBON_MONOXIDE_RATIO_OFFSET]
         }
-
     except Exception as ex:
-        raise exceptions.DataRetrievalError(ex)
-
-    return readings
+        _LOGGER.error(f'Error processing DNp3 readings: {ex}')
+    finally:
+        return readings
 
 
 def plugin_poll(handle):

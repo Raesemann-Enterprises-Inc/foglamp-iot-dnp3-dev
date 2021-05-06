@@ -148,11 +148,11 @@ def get_readings(handle):
         
         # Assemble the readings using the registers that we are concerned about. Apply scaling factor.
         readings = {
-            'top_oil_temp': ((all_dnp3_readings['analog'][TOP_OIL_TEMP_OFFSET]/1000)*(9/5)) + 32,
-            'ltc_tank_temp': ((all_dnp3_readings['analog'][LTC_TANK_TEMP_OFFSET]/1000)*(9/5)) + 32,
-            'winding_1_hotspot_temp' : ((all_dnp3_readings['analog'][WINDING_1_HOTSPOT_TEMP_OFFSET]/1000)*(9/5)) + 32,
-            'winding_2_hotspot_temp' : ((all_dnp3_readings['analog'][WINDING_2_HOTSPOT_TEMP_OFFSET]/1000)*(9/5)) + 32,
-            'winding_3_hotspot_temp' : ((all_dnp3_readings['analog'][WINDING_3_HOTSPOT_TEMP_OFFSET]/1000)*(9/5)) + 32,
+            'top_oil_temp': all_dnp3_readings['analog'][TOP_OIL_TEMP_OFFSET]/1000,
+            'ltc_tank_temp': all_dnp3_readings['analog'][LTC_TANK_TEMP_OFFSET]/1000,
+            'winding_1_hotspot_temp' : all_dnp3_readings['analog'][WINDING_1_HOTSPOT_TEMP_OFFSET]/1000,
+            'winding_2_hotspot_temp' : all_dnp3_readings['analog'][WINDING_2_HOTSPOT_TEMP_OFFSET]/1000,
+            'winding_3_hotspot_temp' : all_dnp3_readings['analog'][WINDING_3_HOTSPOT_TEMP_OFFSET]/1000,
             'winding_1_current_amps' : all_dnp3_readings['analog'][WINDING_1_CURRENT_AMPS_OFFSET]/100,
             'winding_2_current_amps' : all_dnp3_readings['analog'][WINDING_2_CURRENT_AMPS_OFFSET]/100,
             'winding_3_current_amps' : all_dnp3_readings['analog'][WINDING_3_CURRENT_AMPS_OFFSET]/100,
