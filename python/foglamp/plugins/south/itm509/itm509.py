@@ -86,7 +86,7 @@ def open_dnp3_master(handle):
 
     try:
         _LOGGER.info('Initializing ITM509 DNP3 connection -- ip:{} id:{}'.format(outstation_address,outstation_id))
-        master = Dnp3_Master(outstation_address,outstation_id)
+        master = Dnp3_Master(outstation_address,outstation_id,_LOGGER)
         master.open()
         return master
     except Exception as ex:

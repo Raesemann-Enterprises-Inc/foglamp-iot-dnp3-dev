@@ -90,7 +90,7 @@ def open_dnp3_master(handle):
         master.open()
         return master
     except Exception as ex:
-        raise exceptions.DeviceCommunicationError(ex)
+        _LOGGER.error(f'Exception opening DNP3 connection to OPT100: {ex}')
 
 def close_dnp3_master():
     master.close()
@@ -201,9 +201,9 @@ def get_readings(handle):
         }
 
     except Exception as ex:
-        raise exceptions.DataRetrievalError(ex)
-
-    return readings
+        _LOGGER.error(f'Error processing readings: {ex}')
+    finally:
+        return readings
 
 
 def plugin_poll(handle):
@@ -232,7 +232,7 @@ def plugin_poll(handle):
         }
 
     except Exception as ex:
-        raise exceptions.DataRetrievalError(ex)
+        _LOGGER.erro(f'Execptoin in plugin poll: {ex}')
     else:
         return wrapper
 
@@ -283,5 +283,4 @@ def plugin_shutdown(handle):
         return_message = "connection_closed"
         _LOGGER.info(return_message)
     except Exception as ex:
-        _LOGGER.exception('Error in shutting down OPT100 plugin; {}',format(ex))
-        raise
+        _LOGGER.error(f'Error in shutting down OPT100 plugin; {ex}')

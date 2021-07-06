@@ -141,6 +141,7 @@ def get_readings(handle):
     WINDING_1_CURRENT_AMPS_OFFSET = 281
     WINDING_2_CURRENT_AMPS_OFFSET = 286
     WINDING_3_CURRENT_AMPS_OFFSET = 291
+    H2_OFFSET = 300
 
 
     try:
@@ -156,6 +157,7 @@ def get_readings(handle):
             'winding_1_current_amps' : all_dnp3_readings['analog'][WINDING_1_CURRENT_AMPS_OFFSET]/100,
             'winding_2_current_amps' : all_dnp3_readings['analog'][WINDING_2_CURRENT_AMPS_OFFSET]/100,
             'winding_3_current_amps' : all_dnp3_readings['analog'][WINDING_3_CURRENT_AMPS_OFFSET]/100,
+            'h2' : all_dnp3_readings['analog'][H2_OFFSET]
         }
 
     except Exception as ex:
