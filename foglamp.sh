@@ -8,4 +8,9 @@ echo '10.119.111.85 kafkaserver' >> /etc/hosts
 
 service rsyslog start
 /usr/local/foglamp/bin/foglamp start
+
+# Codeserver for development and debugging
+# password is stored in environment variable defined in dockerfile
+# self-signed SSL cert
+code-server --bind-addr 0.0.0.0:8080 --cert --auth password 
 tail -f /var/log/syslog

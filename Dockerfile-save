@@ -1,7 +1,7 @@
 ##################
 # Build image
 ##################
-FROM ubuntu:20.04 as build
+FROM ubuntu:18.04 as build
 
 # Install CMAKE required to build OpenDNP3
 RUN apt update && apt upgrade -y  && apt install -y \
@@ -35,10 +35,10 @@ RUN make DESTDIR=/tmp_dnp3 install
 ##################
 # Deployment image
 ##################
-FROM ubuntu:20.04
+FROM ubuntu:18.04
 
 # FogLAMP version, ditribution, and platform
-ENV FOGLAMP_VERSION=1.9.2
+ENV FOGLAMP_VERSION=1.9.0
 ENV FOGLAMP_DISTRIBUTION=ubuntu1804
 ENV FOGLAMP_PLATFORM=x86_64
 
@@ -49,45 +49,13 @@ ENV DEBIAN_FRONTEND=noninteractive
 COPY --from=build /tmp_cmake /
 COPY --from=build /tmp_dnp3 /
 
-RUN apt update && apt dist-upgrade -y && apt install -y --no-install-recommends \
-    # development tools
-    autoconf \
-    automake \
-    avahi-daemon \
-    build-essential \
-    ca-certificates \
-    cmake \
-    cpulimit \
-    curl \
-    g++ \
-    git \
-    krb5-user \
-    libboost-dev \
-    libboost-system-dev \
-    libboost-thread-dev \
-    libcurl4-openssl-dev \
-    libssl-dev \
-    libpq-dev \
-    libsqlite3-dev \
-    libtool \
-    libz-dev \
-    make \
-    pkg-config \
-    postgresql \
-    python3-dev \
-    python3-pip \
-    python3-setuptools \
-    sqlite3 \
-    uuid-dev \
+RUN apt update && apt install -y --no-install-recommends \
     # tools to make troubleshooting easier from inside the container
-    build-essential \
-    gcc \
     dnsutils \
     inetutils-telnet \
     iproute2 \
     iputils-ping \
     nano \
-    openssh-client \
     # required packages
     rsyslog \
     sed \
@@ -194,28 +162,13 @@ RUN apt update && apt dist-upgrade -y && apt install -y --no-install-recommends 
     apt clean -y  && \
     rm -rf /var/lib/apt/lists/
 
-# Install code-server 
-ENV PATH /root/.local/bin:$PATH
-ENV PASSWORD=FogLAMP_Debugging5
-RUN curl -fsSL https://code-server.dev/install.sh > install.sh && \
-    sh install.sh --method=standalone && \
-    rm -f install.sh && \
-    code-server --install-extension ms-python.python && \
-    code-server --install-extension ms-vscode.cpptools && \
-    code-server --install-extension twxs.cmake && \
-    code-server --install-extension alexcvzz.vscode-sqlite && \
-    code-server --install-extension mechatroner.rainbow-csv && \
-    # Install pylint for code-server
-    pip3 install pylint
-# copy .pylintrc configuration
-COPY /root /root 
 
-
-# Install JEA custom Python plugins
+# Install Python plugins
 COPY ./python /usr/local/foglamp/python/
 
 # Install dependencies from all of the requirements files in /usr/local/foglamp/python
 RUN for i in /usr/local/foglamp/python/requirements*.txt; do python3 -m pip install --upgrade -r $i; done;
+
 
 # Copy foglamp startup script
 COPY foglamp.sh /usr/local/foglamp/foglamp.sh
@@ -225,14 +178,10 @@ COPY /etc /etc
 
 ENV FOGLAMP_ROOT=/usr/local/foglamp
 
-# Volume for development. This saves any changes you make to plugins during development.
-VOLUME /usr/local/foglamp
+VOLUME /usr/local/foglamp/data
 
-# Volume for production. This saves only the configuration and data.
-# VOLUME /usr/local/foglamp/data
-
-# code server (8080) and foglamp API port for http and https (8081 and 1995)
-EXPOSE 8080 8081 1995
+# foglamp API port for http and https, kerberos
+EXPOSE 8081 1995 502 23
 
 # start rsyslog, foglamp, and tail syslog
 CMD ["bash","/usr/local/foglamp/foglamp.sh"]

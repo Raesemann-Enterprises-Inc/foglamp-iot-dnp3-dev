@@ -30,19 +30,29 @@ _DEFAULT_CONFIG = {
         'description': 'Asset name',
         'type': 'string',
         'default': 'B100',
-        'order': "1"
+        'order': "1",
+        'displayName': 'Asset Name'
     },
     'address': {
         'description': 'Address of B100',
         'type': 'string',
         'default': '127.0.0.1',
-        'order': '2'
+        'order': '2',
+        'displayName': 'IP Address'
     },
     'id': {
         'description': 'Outstation ID',
         'type': 'integer',
         'default': '10',
-        'order': '3'
+        'order': '3',
+        'displayName': 'DNP3 Outstation ID'
+    },
+    'hydrogen':{
+        'description': 'Hydrogen Sensor Connected',
+        'type': 'boolean',
+        'default': 'false',
+        'order': '4',
+        'displayName': 'Hydrogen Sensor Connected'
     }
 }
 
@@ -90,7 +100,7 @@ def open_dnp3_master(handle):
         master.open()
         return master
     except Exception as ex:
-        raise exceptions.DeviceCommunicationError(ex)
+        raise ex
 
 def close_dnp3_master():
     master.close()
@@ -104,7 +114,6 @@ def plugin_init(config):
         handle: JSON object to be used in future calls to the plugin
     Raises:
     """
-    
     return copy.deepcopy(config)
 
 
@@ -127,7 +136,7 @@ def get_readings(handle):
 
     # If the DNP3 master has not been initialized, open it with the configured parameters
     if master is None:
-        master = open_dnp3_master(handle);
+        master = open_dnp3_master(handle)
         time.sleep(30)
         return
 
@@ -143,22 +152,38 @@ def get_readings(handle):
     WINDING_3_CURRENT_AMPS_OFFSET = 291
     H2_OFFSET = 300
 
+    hydrogen = handle['hydrogen']['value']
 
     try:
         all_dnp3_readings = master.values
-        
+        #_LOGGER.info(f'b100 readings: {all_dnp3_readings}')
         # Assemble the readings using the registers that we are concerned about. Apply scaling factor.
-        readings = {
-            'top_oil_temp': all_dnp3_readings['analog'][TOP_OIL_TEMP_OFFSET]/1000,
-            'ltc_tank_temp': all_dnp3_readings['analog'][LTC_TANK_TEMP_OFFSET]/1000,
-            'winding_1_hotspot_temp' : all_dnp3_readings['analog'][WINDING_1_HOTSPOT_TEMP_OFFSET]/1000,
-            'winding_2_hotspot_temp' : all_dnp3_readings['analog'][WINDING_2_HOTSPOT_TEMP_OFFSET]/1000,
-            'winding_3_hotspot_temp' : all_dnp3_readings['analog'][WINDING_3_HOTSPOT_TEMP_OFFSET]/1000,
-            'winding_1_current_amps' : all_dnp3_readings['analog'][WINDING_1_CURRENT_AMPS_OFFSET]/100,
-            'winding_2_current_amps' : all_dnp3_readings['analog'][WINDING_2_CURRENT_AMPS_OFFSET]/100,
-            'winding_3_current_amps' : all_dnp3_readings['analog'][WINDING_3_CURRENT_AMPS_OFFSET]/100,
-            'h2' : all_dnp3_readings['analog'][H2_OFFSET]
-        }
+        if all_dnp3_readings:
+            if hydrogen:
+                readings = {
+                    'top_oil_temp': all_dnp3_readings['analog'][TOP_OIL_TEMP_OFFSET]/1000,
+                    'ltc_tank_temp': all_dnp3_readings['analog'][LTC_TANK_TEMP_OFFSET]/1000,
+                    'winding_1_hotspot_temp' : all_dnp3_readings['analog'][WINDING_1_HOTSPOT_TEMP_OFFSET]/1000,
+                    'winding_2_hotspot_temp' : all_dnp3_readings['analog'][WINDING_2_HOTSPOT_TEMP_OFFSET]/1000,
+                    'winding_3_hotspot_temp' : all_dnp3_readings['analog'][WINDING_3_HOTSPOT_TEMP_OFFSET]/1000,
+                    'winding_1_current_amps' : all_dnp3_readings['analog'][WINDING_1_CURRENT_AMPS_OFFSET]/100,
+                    'winding_2_current_amps' : all_dnp3_readings['analog'][WINDING_2_CURRENT_AMPS_OFFSET]/100,
+                    'winding_3_current_amps' : all_dnp3_readings['analog'][WINDING_3_CURRENT_AMPS_OFFSET]/100,
+                    'h2' : all_dnp3_readings['analog'][H2_OFFSET]
+                }
+            else:
+                readings = {
+                    'top_oil_temp': all_dnp3_readings['analog'][TOP_OIL_TEMP_OFFSET]/1000,
+                    'ltc_tank_temp': all_dnp3_readings['analog'][LTC_TANK_TEMP_OFFSET]/1000,
+                    'winding_1_hotspot_temp' : all_dnp3_readings['analog'][WINDING_1_HOTSPOT_TEMP_OFFSET]/1000,
+                    'winding_2_hotspot_temp' : all_dnp3_readings['analog'][WINDING_2_HOTSPOT_TEMP_OFFSET]/1000,
+                    'winding_3_hotspot_temp' : all_dnp3_readings['analog'][WINDING_3_HOTSPOT_TEMP_OFFSET]/1000,
+                    'winding_1_current_amps' : all_dnp3_readings['analog'][WINDING_1_CURRENT_AMPS_OFFSET]/100,
+                    'winding_2_current_amps' : all_dnp3_readings['analog'][WINDING_2_CURRENT_AMPS_OFFSET]/100,
+                    'winding_3_current_amps' : all_dnp3_readings['analog'][WINDING_3_CURRENT_AMPS_OFFSET]/100
+                }
+        else:
+            readings = {}
 
     except Exception as ex:
         raise exceptions.DataRetrievalError(ex)
@@ -180,10 +205,11 @@ def plugin_poll(handle):
         DataRetrievalError
     """
 
+
     try:
 
         readings = get_readings(handle)
-        
+
         wrapper = {
             'asset': handle['assetName']['value'],
             'timestamp': utils.local_timestamp(),
@@ -243,5 +269,5 @@ def plugin_shutdown(handle):
         return_message = "connection_closed"
         _LOGGER.info(return_message)
     except Exception as ex:
-        _LOGGER.exception('Error in shutting down B100 plugin; {}',format(ex))
+        _LOGGER.exception(f'Error in shutting down B100 plugin {ex}')
         raise

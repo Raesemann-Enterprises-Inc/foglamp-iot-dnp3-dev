@@ -12,7 +12,7 @@ from foglamp.plugins.south.qualitrol_tm8.dnp3_master import Dnp3_Master
 """
 
 __author__ = "Rob Raesemann, rob@raesemann.com, +1 904-613-5988"
-__copyright__ = "Copyright (c) 2020 Raesemann Enterprises, Inc."
+__copyright__ = "Copyright (c) 2021 Raesemann Enterprises, Inc."
 __license__ = "Apache 2.0"
 __version__ = "${VERSION}"
 
@@ -21,36 +21,36 @@ master = None
 
 _DEFAULT_CONFIG = {
     'plugin': {
-        'description': 'OPT100 South using DNP3 Service Plugin',
+        'description': 'Qualitrol TM-8 South Service Plugin',
         'type': 'string',
-        'default': 'vaisala_opt100',
+        'default': 'qualitrol_tm8',
         'readonly': 'true'
     },
     'assetName': {
         'description': 'Asset name',
         'type': 'string',
-        'default': 'OPT100',
-        'order': "1"
+        'default': 'tm8',
+        'order': "1",
+        'displayName': 'Asset Name'
     },
     'address': {
         'description': 'Address of OPT100',
         'type': 'string',
         'default': '127.0.0.1',
-        'order': '2'
+        'order': '2',
+        'displayName': 'Address'
     },
     'id': {
         'description': 'Outstation ID',
         'type': 'integer',
         'default': '10',
-        'order': '3'
+        'order': '3',
+        'displayName': 'Outstation ID'
     }
 }
 
 _LOGGER = logger.setup(__name__, level=logging.INFO)
 """ Setup the access to the logging system of foglamp """
-
-OUTSTATION_ID = 10
-"""  The outstation this request is targeting """
 
 def plugin_info():
     """ Returns information about the plugin.
@@ -90,7 +90,7 @@ def open_dnp3_master(handle):
         master.open()
         return master
     except Exception as ex:
-        raise exceptions.DeviceCommunicationError(ex)
+        raise ex
 
 def close_dnp3_master():
     master.close()
@@ -127,7 +127,7 @@ def get_readings(handle):
 
     # If the DNP3 master has not been initialized, open it with the configured parameters
     if master is None:
-        master = open_dnp3_master(handle);
+        master = open_dnp3_master(handle)
         time.sleep(30)
         return
 
@@ -158,14 +158,14 @@ def get_readings(handle):
     METHANE_HYDROGEN_RATIO_OFFSET = 100
     ACETYLENE_ETHYLENE_RATIO_OFFSET = 101
     ACETYLENE_METHANE_RATIO_OFFSET = 102
-    ETHANE_ACETYLENE_RATIO_OFFSET = 103
+    # ETHANE_ACETYLENE_RATIO_OFFSET = 103
     ETHYLENE_ETHANE_RATIO_OFFSET = 104
     CARBON_DIOXIDE_CARBON_MONOXIDE_RATIO_OFFSET = 105
 
 
     try:
         all_dnp3_readings = master.values
-        
+        #_LOGGER.info(f"readings: {all_dnp3_readings}")
         # Assemble the readings using the registers that we are concerned about. Apply scaling factor.
         readings = {
             'methane' : all_dnp3_readings['analog'][METHANE_OFFSET],
@@ -198,7 +198,7 @@ def get_readings(handle):
             'carbon_dioxide_carbon_monoxide_ratio' : all_dnp3_readings['analog'][CARBON_DIOXIDE_CARBON_MONOXIDE_RATIO_OFFSET]
         }
     except Exception as ex:
-        _LOGGER.error(f'Error processing DNp3 readings: {ex}')
+        _LOGGER.error(f'Error processing DNP3 readings: {ex}')
     finally:
         return readings
 
@@ -280,5 +280,6 @@ def plugin_shutdown(handle):
         return_message = "connection_closed"
         _LOGGER.info(return_message)
     except Exception as ex:
-        _LOGGER.exception('Error in shutting down OPT100 plugin; {}',format(ex))
+        _LOGGER.exception(f'Error in shutting down OPT100 plugin; {ex}')
         raise
+    

@@ -1,11 +1,10 @@
 import copy
-import json
 import logging
 import time
 import uuid
+
 from foglamp.common import logger
 from foglamp.plugins.common import utils
-from foglamp.services.south import exceptions
 from foglamp.plugins.south.vaisala_opt100.dnp3_master import Dnp3_Master
 
 """ Plugin for reading data from a OPT100 via DNP3 protocol
@@ -48,9 +47,6 @@ _DEFAULT_CONFIG = {
 
 _LOGGER = logger.setup(__name__, level=logging.INFO)
 """ Setup the access to the logging system of foglamp """
-
-OUTSTATION_ID = 10
-"""  The outstation this request is targeting """
 
 def plugin_info():
     """ Returns information about the plugin.
@@ -104,7 +100,6 @@ def plugin_init(config):
         handle: JSON object to be used in future calls to the plugin
     Raises:
     """
-    
     return copy.deepcopy(config)
 
 
@@ -127,7 +122,7 @@ def get_readings(handle):
 
     # If the DNP3 master has not been initialized, open it with the configured parameters
     if master is None:
-        master = open_dnp3_master(handle);
+        master = open_dnp3_master(handle)
         time.sleep(30)
         return
 
@@ -158,47 +153,48 @@ def get_readings(handle):
     METHANE_HYDROGEN_RATIO_OFFSET = 100
     ACETYLENE_ETHYLENE_RATIO_OFFSET = 101
     ACETYLENE_METHANE_RATIO_OFFSET = 102
-    ETHANE_ACETYLENE_RATIO_OFFSET = 103
+    # ETHANE_ACETYLENE_RATIO_OFFSET = 103
     ETHYLENE_ETHANE_RATIO_OFFSET = 104
     CARBON_DIOXIDE_CARBON_MONOXIDE_RATIO_OFFSET = 105
 
 
     try:
         all_dnp3_readings = master.values
-
-        
-        
-        # Assemble the readings using the registers that we are concerned about. Apply scaling factor.
-        readings = {
-            'methane' : all_dnp3_readings['analog'][METHANE_OFFSET],
-            'acetylene' : all_dnp3_readings['analog'][ACETYLENE_OFFSET],
-            'ethylene' : all_dnp3_readings['analog'][ETHYLENE_OFFSET],
-            'ethane' : all_dnp3_readings['analog'][ETHANE_OFFSET],
-            'carbon_monoxide' : all_dnp3_readings['analog'][CARBON_MONOXIDE_OFFSET],
-            'carbon_dioxide' : all_dnp3_readings['analog'][CARBON_DIOXIDE_OFFSET],
-            'tcg' : all_dnp3_readings['analog'][TCG_OFFSET],
-            'hydrogen' : all_dnp3_readings['analog'][HYDROGEN_OFFSET],
-            'oil_moisture' : all_dnp3_readings['analog'][OIL_MOISTURE_OFFSET],
-            'oil_temp' : all_dnp3_readings['analog'][OIL_TEMP_OFFSET],
-            'moisture_in_oil' : all_dnp3_readings['analog'][MOISTURE_IN_OIL_OFFSET],
-            'gas_pressure' : all_dnp3_readings['analog'][GAS_PRESSURE_OFFSET],
-            '24hr_methane_average' : all_dnp3_readings['analog'][_24HR_METHANE_AVERAGE_OFFSET],
-            '24hr_acetylene_average' : all_dnp3_readings['analog'][_24HR_ACETYLENE_AVERAGE_OFFSET],
-            '24hr_ethylene_average' : all_dnp3_readings['analog'][_24HR_ETHYLENE_AVERAGE_OFFSETT],
-            '24hr_ehthane_average' : all_dnp3_readings['analog'][_24HR_ETHANE_AVERAGE_OFFSET],
-            '24hr_carbon_monoxide_average' : all_dnp3_readings['analog'][_24HR_CARBON_MONOXIDE_AVERAGE_OFFSET],
-            '24hr_carbon_dioxide_average' : all_dnp3_readings['analog'][_24HR_CARBON_DIOXIDE_AVERAGE_OFFSET],
-            '24hr_tcg_average' : all_dnp3_readings['analog'][_24HR_TCG_AVERAGE_OFFSET],
-            '24hr_hydrogen_average' : all_dnp3_readings['analog'][_24HR_HYDROGEN_AVERAGE_OFFSET],
-            '24hr_oil_moisture_average' : all_dnp3_readings['analog'][_24HR_OIL_MOISTURE_AVERAGE_OFFSET],
-            '24hr_gas_pressure_average' : all_dnp3_readings['analog'][_24HR_GAS_PRESSURE_AVERAGE_OFFSET],
-            'methane_hydrogen_ratio' : all_dnp3_readings['analog'][METHANE_HYDROGEN_RATIO_OFFSET],
-            'acetylene_ethylene_ratio' : all_dnp3_readings['analog'][ACETYLENE_ETHYLENE_RATIO_OFFSET],
-            'acetylene_methane_ratio' : all_dnp3_readings['analog'][ACETYLENE_METHANE_RATIO_OFFSET],
-            # 'ethane_acetylene_ratio' : all_dnp3_readings['analog'][ETHANE_ACETYLENE_RATIO_OFFSET],
-            'ethylene_ethane_ratio' : all_dnp3_readings['analog'][ETHYLENE_ETHANE_RATIO_OFFSET],
-            'carbon_dioxide_carbon_monoxide_ratio' : all_dnp3_readings['analog'][CARBON_DIOXIDE_CARBON_MONOXIDE_RATIO_OFFSET]
-        }
+        # Assemble the readings using the registers that we are concerned about.
+        # Apply scaling factor.
+        if all_dnp3_readings:
+            readings = {
+                'methane' : all_dnp3_readings['analog'][METHANE_OFFSET],
+                'acetylene' : all_dnp3_readings['analog'][ACETYLENE_OFFSET],
+                'ethylene' : all_dnp3_readings['analog'][ETHYLENE_OFFSET],
+                'ethane' : all_dnp3_readings['analog'][ETHANE_OFFSET],
+                'carbon_monoxide' : all_dnp3_readings['analog'][CARBON_MONOXIDE_OFFSET],
+                'carbon_dioxide' : all_dnp3_readings['analog'][CARBON_DIOXIDE_OFFSET],
+                'tcg' : all_dnp3_readings['analog'][TCG_OFFSET],
+                'hydrogen' : all_dnp3_readings['analog'][HYDROGEN_OFFSET],
+                'oil_moisture' : all_dnp3_readings['analog'][OIL_MOISTURE_OFFSET],
+                'oil_temp' : all_dnp3_readings['analog'][OIL_TEMP_OFFSET],
+                'moisture_in_oil' : all_dnp3_readings['analog'][MOISTURE_IN_OIL_OFFSET],
+                'gas_pressure' : all_dnp3_readings['analog'][GAS_PRESSURE_OFFSET],
+                '24hr_methane_average' : all_dnp3_readings['analog'][_24HR_METHANE_AVERAGE_OFFSET],
+                '24hr_acetylene_average' : all_dnp3_readings['analog'][_24HR_ACETYLENE_AVERAGE_OFFSET],
+                '24hr_ethylene_average' : all_dnp3_readings['analog'][_24HR_ETHYLENE_AVERAGE_OFFSETT],
+                '24hr_ehthane_average' : all_dnp3_readings['analog'][_24HR_ETHANE_AVERAGE_OFFSET],
+                '24hr_carbon_monoxide_average' : all_dnp3_readings['analog'][_24HR_CARBON_MONOXIDE_AVERAGE_OFFSET],
+                '24hr_carbon_dioxide_average' : all_dnp3_readings['analog'][_24HR_CARBON_DIOXIDE_AVERAGE_OFFSET],
+                '24hr_tcg_average' : all_dnp3_readings['analog'][_24HR_TCG_AVERAGE_OFFSET],
+                '24hr_hydrogen_average' : all_dnp3_readings['analog'][_24HR_HYDROGEN_AVERAGE_OFFSET],
+                '24hr_oil_moisture_average' : all_dnp3_readings['analog'][_24HR_OIL_MOISTURE_AVERAGE_OFFSET],
+                '24hr_gas_pressure_average' : all_dnp3_readings['analog'][_24HR_GAS_PRESSURE_AVERAGE_OFFSET],
+                'methane_hydrogen_ratio' : all_dnp3_readings['analog'][METHANE_HYDROGEN_RATIO_OFFSET],
+                'acetylene_ethylene_ratio' : all_dnp3_readings['analog'][ACETYLENE_ETHYLENE_RATIO_OFFSET],
+                'acetylene_methane_ratio' : all_dnp3_readings['analog'][ACETYLENE_METHANE_RATIO_OFFSET],
+                # 'ethane_acetylene_ratio' : all_dnp3_readings['analog'][ETHANE_ACETYLENE_RATIO_OFFSET],
+                'ethylene_ethane_ratio' : all_dnp3_readings['analog'][ETHYLENE_ETHANE_RATIO_OFFSET],
+                'carbon_dioxide_carbon_monoxide_ratio' : all_dnp3_readings['analog'][CARBON_DIOXIDE_CARBON_MONOXIDE_RATIO_OFFSET]
+            }
+        else:
+            readings = {}
 
     except Exception as ex:
         _LOGGER.error(f'Error processing readings: {ex}')
@@ -223,7 +219,9 @@ def plugin_poll(handle):
     try:
 
         readings = get_readings(handle)
+
         
+
         wrapper = {
             'asset': handle['assetName']['value'],
             'timestamp': utils.local_timestamp(),
@@ -232,7 +230,7 @@ def plugin_poll(handle):
         }
 
     except Exception as ex:
-        _LOGGER.erro(f'Execptoin in plugin poll: {ex}')
+        _LOGGER.error(f'Execptoin in plugin poll: {ex}')
     else:
         return wrapper
 

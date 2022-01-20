@@ -4,9 +4,7 @@
 # See: http://foglamp.readthedocs.io/
 # FOFLAMP_END
 
-import copy
 import logging
-import datetime
 import uuid
 
 from foglamp.common import logger
@@ -14,8 +12,7 @@ from foglamp.plugins.common import utils
 from foglamp.plugins.south.qualitrol_tm1.qualitrol_tm1_modbus import ModbusTM1
 from foglamp.services.south import exceptions
 
-""" Plugin for reading data from a Qualitrol TM-1
-"""
+""" Plugin for reading data from a Qualitrol TM-1 """
 
 __author__ = "Rob Raesemann, rob@raesemann.com, +1 904-613-5988"
 __copyright__ = "Copyright (c) 2021 Raesemann Enterprises, Inc."
@@ -84,7 +81,6 @@ def plugin_init(config):
     """
     master_ip = config['address']['value']
     modbus_port = int(config['port']['value'])
-    
     config['qualitrol_tm1'] = ModbusTM1(master_ip,modbus_port)
 
     return config
@@ -108,12 +104,15 @@ def plugin_poll(handle):
     try:
         qualitrol_tm1 = handle['qualitrol_tm1']
         readings = qualitrol_tm1.get_readings()
-        data = {
-            "asset": handle['assetName']['value'],
-            "timestamp":  utils.local_timestamp() ,
-            "key": str(uuid.uuid4()),
-            "readings": readings
-        }
+        if readings:
+            data = {
+                "asset": handle['assetName']['value'],
+                "timestamp":  utils.local_timestamp() ,
+                "key": str(uuid.uuid4()),
+                "readings": readings
+            }
+        else:
+            _LOGGER.error('No readings received') 
 
     except Exception as ex:
         raise exceptions.DataRetrievalError(ex)
@@ -124,7 +123,8 @@ def plugin_poll(handle):
 def plugin_reconfigure(handle, new_config):
     """ Reconfigures the plugin
 
-    it should be called when the configuration of the plugin is changed during the operation of the south service.
+    it should be called when the configuration of the plugin is changed
+    during the operation of the south service.
     The new configuration category should be passed.
 
     Args:
@@ -168,7 +168,6 @@ def plugin_shutdown(handle):
     Raises:
     """
     try:
-        
         _LOGGER.info("shutting down tm1")
         qualitrol_tm1 = handle['qualitrol_tm1']
         qualitrol_tm1.close()
