@@ -38,8 +38,8 @@ RUN make DESTDIR=/tmp_dnp3 install
 FROM ubuntu:20.04
 
 # FogLAMP version, ditribution, and platform
-ENV FOGLAMP_VERSION=1.9.2
-ENV FOGLAMP_DISTRIBUTION=ubuntu1804
+ENV FOGLAMP_VERSION=2.0.1
+ENV FOGLAMP_DISTRIBUTION=ubuntu2004
 ENV FOGLAMP_PLATFORM=x86_64
 
 # Avoid interactive questions when installing Kerberos
@@ -92,7 +92,7 @@ RUN apt update && apt dist-upgrade -y && apt install -y --no-install-recommends 
     rsyslog \
     sed \
     wget && \
-    # Download Foglamp package and isntall
+    # Download Foglamp package and install
     wget --no-check-certificate https://foglamp.s3.amazonaws.com/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}_${FOGLAMP_DISTRIBUTION}.tgz && \
     tar -xzvf foglamp-${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}_${FOGLAMP_DISTRIBUTION}.tgz && \
     #
@@ -103,7 +103,7 @@ RUN apt update && apt dist-upgrade -y && apt install -y --no-install-recommends 
     # will install normally.
     #
     # Unpack .deb package    
-    dpkg --unpack ./foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
+    dpkg --unpack ./foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb && \
     # Remove lines that enable and start the service. They call enable_FOGLAMP_service() and start_FOGLAMP_service()
     # Save to /foglamp.postinst. We'll run that after we install the dependencies.
     sed '/^.*_foglamp_service$/d' /var/lib/dpkg/info/foglamp.postinst > /foglamp.postinst && \
@@ -114,77 +114,77 @@ RUN apt update && apt dist-upgrade -y && apt install -y --no-install-recommends 
     # Manually run the post install script - creates certificates, installs python dependencies etc.
     mkdir -p /usr/local/foglamp/data/extras/fogbench && \
     chmod +x /foglamp.postinst && \
-    /foglamp.postinst && \
+    /foglamp.postinst
     # Install plugins
     # Comment out any packages that you don't need to make the image smaller
     # Notification Service
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-service-notification-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
+RUN apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-service-notification_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb && \
     # Filter Plugins
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-asset-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-blocktest-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-change-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-delta-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-downsample-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-ema-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-eventrate-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-expression-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-fft-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-fft2-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-flirvalidity-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-metadata-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-python27-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-python35-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-rate-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-rms-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-rms-trigger-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-scale-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-scale-set-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-simple-python-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-statistics-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-threshold-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-vibration-features-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-asset_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-blocktest_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-change_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-delta_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-downsample_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-ema_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-eventrate_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-expression_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-fft_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-fft2_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-flirvalidity_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-metadata_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-python27_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-python35_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-rate_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-rms_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-rms-trigger_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-scale_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-scale-set_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-simple-python_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-statistics_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-threshold_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-filter-vibration-features_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb && \
     # North Plugins
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-north-harperdb-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-north-http-north-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-north-httpc-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-north-influxdb-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-north-influxdbcloud-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-north-kafka-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-north-opcua-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-north-harperdb_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-north-http-north_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-north-httpc_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-north-influxdb_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-north-influxdbcloud_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-north-kafka_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-north-opcua_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
     # Notification Plugins
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-alexa-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-asset-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-email-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-ifttt-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-north-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-python35-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-slack-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-alexa_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-asset_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-email_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-ifttt_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-north_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-python35_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-notify-slack_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
     # Rule Plugins
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-rule-average-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-rule-outofbound-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-rule-periodic-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-rule-simple-expression-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-rule-average_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-rule-outofbound_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-rule-periodic_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-rule-simple-expression_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb && \
     # South Plugins
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-benchmark-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-coap-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-csv-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-CSV-Async-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-csvplayback-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-dnp3-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-expression-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-modbus-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-flirax8-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-http-south-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-modbustcp-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-mqtt-sparkplug-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-opcua-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-openweathermap-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-playback-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-random-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-randomwalk-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-s7-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-sinusoid-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
-    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-systeminfo-${FOGLAMP_VERSION}-${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-benchmark_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-coap_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-csv_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-CSV-Async_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-csvplayback_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-dnp3_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-expression_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-modbus_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-flirax8_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-http-south_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-modbustcp_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-mqtt-sparkplug_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-opcua_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-openweathermap_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-playback_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-random_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-randomwalk_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-s7_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-sinusoid_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
+    apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-south-systeminfo_${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}.deb  && \
     # Cleanup
     rm -f ./*.tgz && \ 
     # You may choose to leave the installation packages in the directory in case you need to troubleshoot
