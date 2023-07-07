@@ -38,7 +38,7 @@ RUN make DESTDIR=/tmp_dnp3 install
 FROM ubuntu:20.04
 
 # FogLAMP version, ditribution, and platform
-ENV FOGLAMP_VERSION=2.0.1
+ENV FOGLAMP_VERSION=2.1.0
 ENV FOGLAMP_DISTRIBUTION=ubuntu2004
 ENV FOGLAMP_PLATFORM=x86_64
 
@@ -74,6 +74,8 @@ RUN apt update && apt dist-upgrade -y && apt install -y --no-install-recommends 
     make \
     pkg-config \
     postgresql \
+    # for building pydnp3
+    python2.7-dev \
     python3-dev \
     python3-pip \
     python3-setuptools \
@@ -86,14 +88,16 @@ RUN apt update && apt dist-upgrade -y && apt install -y --no-install-recommends 
     inetutils-telnet \
     iproute2 \
     iputils-ping \
+    jq \
     nano \
     openssh-client \
     # required packages
     rsyslog \
     sed \
-    wget && \
+    wget # && \
     # Download Foglamp package and install
-    wget --no-check-certificate https://foglamp.s3.amazonaws.com/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}_${FOGLAMP_DISTRIBUTION}.tgz && \
+RUN echo https://foglamp.s3.amazonaws.com/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}_${FOGLAMP_DISTRIBUTION}.tgz
+RUN wget --no-check-certificate https://foglamp.s3.amazonaws.com/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP_PLATFORM}/foglamp-${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}_${FOGLAMP_DISTRIBUTION}.tgz && \
     tar -xzvf foglamp-${FOGLAMP_VERSION}_${FOGLAMP_PLATFORM}_${FOGLAMP_DISTRIBUTION}.tgz && \
     #
     # The postinstall script of the .deb package enables and starts the foglamp service. Since services are not supported in docker
@@ -196,7 +200,7 @@ RUN apt install -y /foglamp/${FOGLAMP_VERSION}/${FOGLAMP_DISTRIBUTION}/${FOGLAMP
 
 # Install code-server 
 ENV PATH /root/.local/bin:$PATH
-ENV PASSWORD=FogLAMP_Debugging5
+ENV PASSWORD=Password123
 RUN curl -fsSL https://code-server.dev/install.sh > install.sh && \
     sh install.sh --method=standalone && \
     rm -f install.sh && \
@@ -226,13 +230,14 @@ COPY /etc /etc
 ENV FOGLAMP_ROOT=/usr/local/foglamp
 
 # Volume for development. This saves any changes you make to plugins during development.
-VOLUME /usr/local/foglamp
+VOLUME /usr/local/foglamp:rw
 
 # Volume for production. This saves only the configuration and data.
 # VOLUME /usr/local/foglamp/data
 
 # code server (8080) and foglamp API port for http and https (8081 and 1995)
-EXPOSE 8080 8081 1995
+# OPC UA north 4840
+EXPOSE 8080 8081 4840 1995 6683 6684
 
 # start rsyslog, foglamp, and tail syslog
 CMD ["bash","/usr/local/foglamp/foglamp.sh"]

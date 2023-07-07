@@ -1,0 +1,13 @@
+version: '2'
+services:
+  foglamp:
+    image: robraesemann/foglamp_dnp3_dev:2.1.0
+    ports:
+      #- "8080:8080"
+      - "8081:8081"
+      - "1995:1995"
+      # - "4840:4840"
+    volumes:
+      - foglamp:/usr/local/foglamp
+volumes:
+  foglamp:

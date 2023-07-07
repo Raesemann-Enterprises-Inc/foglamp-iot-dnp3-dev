@@ -3,3 +3,6 @@
 *.tar
 *.exe
 etc/ssl/certs/*
+IOx/*.save
+IOx/*.zip
+IOx/ioxclient_1.17.0.0_windows_amd64/*
