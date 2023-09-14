@@ -3,34 +3,35 @@
 ##################
 FROM ubuntu:20.04 as build
 
+ENV CMAKE_VERSION  3.27.4
+
 # Install CMAKE required to build OpenDNP3
 RUN apt update && apt upgrade -y  && apt install -y \
     build-essential \
     git \
     libssl-dev \
     wget
-RUN wget https://github.com/Kitware/CMake/releases/download/v3.18.2/cmake-3.18.2.tar.gz
-RUN tar xvzf cmake-3.18.2.tar.gz
-RUN cd cmake-3.18.2
-WORKDIR /cmake-3.18.2
-RUN ./bootstrap
-RUN make
-# make install for next stage
-RUN make DESTDIR=/tmp_cmake install
-# make install for building opendnp3
-RUN make install
+RUN wget https://github.com/Kitware/CMake/archive/refs/tags/v${CMAKE_VERSION}.tar.gz -O cmake.tar.gz &&\
+    mkdir cmake &&\
+    tar xvzf cmake.tar.gz --strip-components=1 -C cmake &&\
+    cd cmake &&\
+    ./bootstrap &&\
+    make &&\
+    # make install for next stage
+    RUN make DESTDIR=/tmp_cmake install &&\
+    # make install for building opendnp3
+    make install
 
 # Build OpenDNP3 libraries required for pydnp3
 WORKDIR /
-RUN git clone https://github.com/dnp3/opendnp3.git
-WORKDIR /opendnp3
-RUN mkdir build
-RUN cd build
-WORKDIR /opendnp3/build
-RUN pwd
-RUN cmake ..
-RUN make
-RUN make DESTDIR=/tmp_dnp3 install
+RUN git clone https://github.com/dnp3/opendnp3.git &&\
+    cd /opendnp3 &&\
+    mkdir build &&\
+    cd build &&\
+    pwd &&\
+    cmake .. &&\
+    make &&\
+    make DESTDIR=/tmp_dnp3 install
 
 ##################
 # Deployment image
@@ -225,7 +226,7 @@ RUN for i in /usr/local/foglamp/python/requirements*.txt; do python3 -m pip inst
 COPY foglamp.sh /usr/local/foglamp/foglamp.sh
 
 # Copy Kakfa certs and resolv.conf to container
-COPY /etc /etc
+# COPY /etc /etc
 
 ENV FOGLAMP_ROOT=/usr/local/foglamp
 
